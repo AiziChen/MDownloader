@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -94,9 +95,17 @@ public class Downloader implements ActionListener {
         progressBar.setStringPainted(true);
         progressBar.setString("下载进度: 0/0");
 
-        // download button
-        JButton dbutton = new JButton("下载");
-        dbutton.addActionListener(this);
+        // buttons
+        Box bBox = Box.createHorizontalBox();
+        JButton dButton = new JButton("下载");
+        JButton pButton = new JButton("暂停");
+        JButton rButton = new JButton("删除");
+        bBox.add(dButton);
+        bBox.add(pButton);
+        bBox.add(rButton);
+        dButton.addActionListener(this);
+        pButton.addActionListener(this);
+        rButton.addActionListener(this);
 
         jpanel.setLayout(new BoxLayout(jpanel, BoxLayout.Y_AXIS));
         jpanel.add(infoLabel);
@@ -105,7 +114,7 @@ public class Downloader implements ActionListener {
         jpanel.add(threadNumBox);
         jpanel.add(uaBox);
         jpanel.add(progressBar);
-        jpanel.add(dbutton);
+        jpanel.add(bBox);
 
 
         jframe.add(jpanel);
@@ -128,11 +137,36 @@ public class Downloader implements ActionListener {
 
 
     @Override
-    public void actionPerformed(ActionEvent e) {
-        JButton button = (JButton) e.getSource();
+    public void actionPerformed(ActionEvent event) {
         urlStr = urlField.getText();
         fileName = fileNameFiled.getText();
 
+        switch (event.getActionCommand()) {
+            case "下载":
+                startDownload(event);
+                break;
+            case "暂停":
+                if (downloadThreads != null) {
+                }
+                break;
+            case "删除":
+                if (downloadThreads != null) {
+                    for (int i = 0; i < partNum; ++i) {
+                        try {
+                            downloadThreads[i].stopDownload();
+                            downloadThreads[i].stop();
+                        } catch (RuntimeException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                new File(fileName).delete();
+                break;
+        }
+    }
+
+
+    private void startDownload(ActionEvent event) {
         try {
             partNum = Integer.valueOf(threadNumField.getText());
         } catch (RuntimeException error) {
@@ -140,16 +174,20 @@ public class Downloader implements ActionListener {
             return;
         }
         // init the downloadThreads
-        downloadThreads = new DownloadThread[partNum];
+        if (downloadThreads == null) {
+            downloadThreads = new DownloadThread[partNum];
+        }
+
+        if (new File(fileName).exists()) {
+            progressBar.setString("文件已存在");
+            return;
+        }
 
         for (int i = 0; i < partNum; ++i) {
             downloadThreads[i] = new DownloadThread(urlStr, partNum, i, fileName, uaField.getText());
-            if (downloadThreads[i].fileExists()) {
-                progressBar.setString("文件已存在");
-                return;
-            }
             downloadThreads[i].start();
         }
+
     }
 
 

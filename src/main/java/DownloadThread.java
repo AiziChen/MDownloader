@@ -21,12 +21,16 @@ class DownloadThread extends Thread {
     // 下载长度
     int dlength = 0;
 
+    private HttpURLConnection conn;
+    private RandomAccessFile[] rafs;
+
     public DownloadThread(String urlStr, int partNum, int part, String fileName, String ua) {
         this.urlStr = urlStr;
         this.partNum = partNum;
         this.part = part;
         this.fileName = fileName;
         this.ua = ua;
+        rafs = new RandomAccessFile[partNum];
     }
 
     @Override
@@ -37,7 +41,7 @@ class DownloadThread extends Thread {
     private void download() {
         try {
             URL url = new URL(urlStr);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn = (HttpURLConnection) url.openConnection();
             conn.setConnectTimeout(5 * 1000);
             //conn.setReadTimeout(7 * 1000);
             conn.setRequestMethod("GET");
@@ -51,17 +55,17 @@ class DownloadThread extends Thread {
             long pos = currentPartSize * part;
             InputStream inStream = conn.getInputStream();
             inStream.skip(pos);
-            RandomAccessFile raf = new RandomAccessFile(fileName, "rw");
-            raf.seek(pos);
+            rafs[part] = new RandomAccessFile(fileName, "rw");
+            rafs[part].seek(pos);
 
             byte[] buff = new byte[1024];
             int hasRead;
             while ((hasRead=inStream.read(buff)) != -1 && dlength < currentPartSize) {
-                raf.write(buff, 0, hasRead);
+                rafs[part].write(buff, 0, hasRead);
                 dlength += hasRead;
             }
             // Retrieve the resources
-            raf.close();
+            rafs[part].close();
             inStream.close();
             conn.disconnect();
         } catch (IOException e) {
@@ -70,12 +74,14 @@ class DownloadThread extends Thread {
         }
     }
 
-    public boolean fileExists() {
-        File file = new File(fileName);
-        if (file.exists()) {
-            return true;
-        } else {
-            return false;
+    public void stopDownload() {
+        if (conn != null) {
+            conn.disconnect();
+            try {
+                rafs[part].close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
