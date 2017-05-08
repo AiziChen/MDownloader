@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_mdowner" default="compile.module.mdowner">
+  <dirname property="module.mdowner.basedir" file="${ant.file.module_mdowner}"/>
+  
+  <property name="module.jdk.home.mdowner" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.mdowner" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.mdowner" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.mdowner" value="-encoding UTF-8 -source 8 -target 8 ${compiler.args}"/>
+  
+  <property name="mdowner.output.dir" value="${module.mdowner.basedir}/../../build/classes/main"/>
+  <property name="mdowner.testoutput.dir" value="${module.mdowner.basedir}/../../build/classes/test"/>
+  
+  <path id="mdowner.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="mdowner.module.production.classpath">
+    <path refid="${module.jdk.classpath.mdowner}"/>
+  </path>
+  
+  <path id="mdowner.runtime.production.module.classpath">
+    <pathelement location="${mdowner.output.dir}"/>
+  </path>
+  
+  <path id="mdowner.module.classpath">
+    <path refid="${module.jdk.classpath.mdowner}"/>
+    <pathelement location="${mdowner.output.dir}"/>
+    <path refid="library.gradle:_junit:junit:4.12.classpath"/>
+    <path refid="library.gradle:_org.hamcrest:hamcrest-core:1.3.classpath"/>
+  </path>
+  
+  <path id="mdowner.runtime.module.classpath">
+    <pathelement location="${mdowner.testoutput.dir}"/>
+    <pathelement location="${mdowner.output.dir}"/>
+    <path refid="library.gradle:_junit:junit:4.12.classpath"/>
+    <path refid="library.gradle:_org.hamcrest:hamcrest-core:1.3.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.mdowner">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.mdowner">
+    <patternset refid="excluded.from.module.mdowner"/>
+  </patternset>
+  
+  <path id="mdowner.module.sourcepath">
+    <dirset dir="${module.mdowner.basedir}/../../../mdowner">
+      <include name="src/main/java"/>
+      <include name="src/main/resources"/>
+    </dirset>
+  </path>
+  
+  <path id="mdowner.module.test.sourcepath">
+    <dirset dir="${module.mdowner.basedir}/../../../mdowner">
+      <include name="src/test/java"/>
+      <include name="src/test/resources"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.mdowner" depends="compile.module.mdowner.production,compile.module.mdowner.tests" description="Compile module mdowner"/>
+  
+  <target name="compile.module.mdowner.production" depends="register.custom.compilers" description="Compile module mdowner; production classes">
+    <mkdir dir="${mdowner.output.dir}"/>
+    <javac2 destdir="${mdowner.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.mdowner}/javac">
+      <compilerarg line="${compiler.args.mdowner}"/>
+      <bootclasspath refid="mdowner.module.bootclasspath"/>
+      <classpath refid="mdowner.module.production.classpath"/>
+      <src refid="mdowner.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.mdowner"/>
+    </javac2>
+    
+    <copy todir="${mdowner.output.dir}">
+      <fileset dir="${module.mdowner.basedir}/../../src/main/java">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+      <fileset dir="${module.mdowner.basedir}/../../src/main/resources">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.mdowner.tests" depends="register.custom.compilers,compile.module.mdowner.production" description="compile module mdowner; test classes" unless="skip.tests">
+    <mkdir dir="${mdowner.testoutput.dir}"/>
+    <javac2 destdir="${mdowner.testoutput.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.mdowner}/javac">
+      <compilerarg line="${compiler.args.mdowner}"/>
+      <bootclasspath refid="mdowner.module.bootclasspath"/>
+      <classpath refid="mdowner.module.classpath"/>
+      <src refid="mdowner.module.test.sourcepath"/>
+      <patternset refid="excluded.from.compilation.mdowner"/>
+    </javac2>
+    
+    <copy todir="${mdowner.testoutput.dir}">
+      <fileset dir="${module.mdowner.basedir}/../../src/test/java">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+      <fileset dir="${module.mdowner.basedir}/../../src/test/resources">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="clean.module.mdowner" description="cleanup module">
+    <delete dir="${mdowner.output.dir}"/>
+    <delete dir="${mdowner.testoutput.dir}"/>
+  </target>
+</project>
